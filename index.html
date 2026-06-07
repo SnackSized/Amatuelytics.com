@@ -8,7 +8,7 @@
     <!-- Grabbing Computer Modern font (LaTeX) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/latin-modern-webfont@1.0.0/style/latin-modern-roman.min.css">
     
-    <style>
+<style>
         body {
             /* Activate LaTeX-skriften for the whole page */
             font-family: "Latin Modern Roman", Georgia, serif;
@@ -22,6 +22,9 @@
             margin: 80px auto;
             padding: 0 20px;
             text-align: justify;
+
+            /* Giver plads i toppen, så menuen ikke dækker teksten */
+            padding-top: 60px; 
         }
 
         h1, h2, h3 {
@@ -50,15 +53,56 @@
             font-weight: bold;
             margin-bottom: 5px;
         }
+
+        /* Fastlåst topmenu i LaTeX-stil */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95); /* Let gennemsigtig hvid */
+            border-bottom: 1px solid #ddd;
+            padding: 15px 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: flex-end; /* Sætter linket helt til højre */
+        }
+
+        .nav-link {
+            font-family: "Latin Modern Roman", Georgia, serif;
+            font-size: 11pt;
+            color: #333;
+            text-decoration: none;
+            font-variant: small-caps; /* Giver det klassiske LaTeX small-caps look */
+            letter-spacing: 1px;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #000;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
+
+<nav class="top-nav">
+    <div class="nav-container">
+        <a href="https://dashboard.amateulytics.com" class="nav-link">Dashboard</a>
+    </div>
+</nav>
 
     <h1>Amateulytics /ˌæm.ə.tʃʊˈlɪt.ɪks/ (noun)</h1>
     <div class="author-date">2026</div>
 
 
-<h2>Welcome to Amateurlytics.com</h2>
+<h2>Welcome to Amateulytics.com</h2>
     <p>
         If you love beer, data and code and see them as symbiotic - you have found your new home...
     </p>
