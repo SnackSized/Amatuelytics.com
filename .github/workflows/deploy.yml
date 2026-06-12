@@ -1,7 +1,7 @@
 # ==========================================
 # GITHUB ACTIONS – AUTOMATISK DEPLOY TIL ONE.COM
 # ==========================================
-name: Deploy to One.com via Absolute Path
+name: Deploy to One.com Files Subfolder
 
 on:
   push:
@@ -13,20 +13,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. HENTER KODEN FRA GITHUB
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. INSTALLERER SFTP-KLIENTEN (LFTP)
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # 3. SYNKRONISERING VIA DEN ABSOLUTTE STI
-      # Vi bruger den rå sti, som serveren selv afslørede i fejlloggen.
-      # Vi uploader direkte til 'amateulytics.com' mappen, som styrer din hjemmeside.
-      - name: SFTP Mirror to Absolute Path
+      # Vi tvinger filerne ind i undermappen 'files', som din File Manager viser
+      - name: SFTP Mirror to Exact Files Folder
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; rm -f ./index.html ./favicon.svg ./README.md ./.DS_Store ./.gitattributes; rm -rf ./ai ./cv ./dashboard ./data ./amateulytics.com; mirror -R --verbose ./ ./amateulytics.com/; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --verbose ./ ./amateulytics.com/files/; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
