@@ -9,8 +9,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest # Starter en standard virtuel Linux-server hos GitHub
-    
+    runs-on: ubuntu-latest
+
     steps:
       # Trin 1: Hent dine filer fra GitHub ind på den virtuelle server
       - name: Checkout code
@@ -20,10 +20,10 @@ jobs:
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Trin 3: Forbind og synkroniser filerne direkte til One.com via krypteret SFTP
-      - name: SFTP Mirror to One.com
+      # Trin 3: Forbind og synkroniser filerne direkte til One.com via standard FTP
+      - name: FTP Mirror to One.com
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --verbose ./ ./; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://sftp.amateulytics.com
+          lftp -e "set ftp:ssl-allow no; mirror -R --verbose ./ ./; quit" -u $FTP_USERNAME,$FTP_PASSWORD ftp.amateulytics.com
