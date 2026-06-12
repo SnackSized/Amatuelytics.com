@@ -1,7 +1,7 @@
 # ==========================================
 # GITHUB ACTIONS – AUTOMATISK DEPLOY TIL ONE.COM
 # ==========================================
-name: Deploy to One.com Files Subfolder
+name: Clean Deploy to Domain Root
 
 on:
   push:
@@ -19,10 +19,11 @@ jobs:
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Vi tvinger filerne ind i undermappen 'files', som din File Manager viser
-      - name: SFTP Mirror to Exact Files Folder
+      # Vi uploader direkte til den absolutte rod (./) uden om undermapper.
+      # Vi bruger --delete, så lftp tvinger serveren til at matche dit GitHub-arkiv 100%.
+      - name: SFTP Mirror to Root
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --verbose ./ ./amateulytics.com/files/; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --delete --verbose ./ ./; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
