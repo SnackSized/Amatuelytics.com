@@ -1,22 +1,43 @@
+# Navnet på denne automatiske arbejdsgang (vises på GitHub Actions-fanen)
 name: Deploy to One.com
+
+# Her bestemmer vi, hvornår scriptet skal gå i gang
 on:
   push:
     branches:
-      - main
+      - main # Scriptet starter KUN, når du trykker 'Push origin' på din 'main'-branch
 
+# De opgaver (jobs), som GitHubs server skal udføre for dig
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # GitHub starter en lynhurtig, virtuel Linux-server til opgaven
+    
     steps:
+      # Trin 1: Hent din kode fra GitHub-arkivet ind på den virtuelle server
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Trin 2: Forbind til One.com og overfør de nye/ændrede filer
       - name: SFTP Deploy to One.com
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4 # Det specifikke SFTP-modul vi bruger
         with:
+          # Henter dit hemmelige One.com-brugernavn fra dit GitHub-pengeskab (Secrets)
           username: ${{ secrets.FTP_USERNAME }}
+          
+          # Henter dit hemmelige One.com-FTP-kodeord fra dit GitHub-pengeskab (Secrets)
           password: ${{ secrets.FTP_PASSWORD }}
+          
+          # Den præcise SFTP-serveradresse, som One.com har tildelt din konto
           server: ssh.c4ew2s88y.service.one
+          
+          # Porten til den sikre og krypterede SFTP-forbindelse
           port: 22
+          
+          # Hvilke lokale filer skal sendes? './*' betyder ALT i din GitHub-mappe
           local_path: './*'
-          remote_path: '/www' # Dette er din live-mappe på One.com
+          
+          # Hvor på One.com skal filerne lande? '/www' er din offentlige rodmappe
+          remote_path: '/www'
+          
+          # Fortæller GitHub, at den IKKE skal prøve at oprette '/www'-mappen, da den findes i forvejen
+          create_remote_dir: false
