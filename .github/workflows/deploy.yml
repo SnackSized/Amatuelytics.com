@@ -1,6 +1,16 @@
-# ==========================================
-# GITHUB ACTIONS – ENDELIG FIX (ALLE SILOER PLACERET)
-# ==========================================
+# ==============================================================================
+# GITHUB ACTIONS – AUTOMATISK MULTI-DEPLOYS TIL ONE.COM WEBROOTS
+# ==============================================================================
+# 
+# DOKUMENTATION AF DOMÆNER OG SYSTEM-MAPPER (SILOER):
+# ------------------------------------------------------------------------------
+# Hovedside: amateulytics.com           --> /webroots/9509701a/
+# Subdomæne: ai.amateulytics.com        --> /webroots/b3f97a47/
+# Subdomæne: cv.amateulytics.com        --> /webroots/b5eb7626/
+# Subdomæne: dashboard.amateulytics.com --> /webroots/be5652e7/
+# Subdomæne: data.amateulytics.com      --> /webroots/a5402042/
+# ==============================================================================
+
 name: Complete Deploy to Real Webroots
 
 on:
@@ -19,7 +29,7 @@ jobs:
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Nu uploader vi alt det rigtige indhold til de fem rigtige webroots-siloer
+      # Vi uploader alt det rigtige indhold til de fem dokumenterede webroots-siloer
       - name: SFTP Mirror to Exact Webroot Silos
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
