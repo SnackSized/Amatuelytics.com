@@ -28,22 +28,11 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y lftp
 
       # 3. OPRYDNING AF GAMMELT ROD & SYNKRONISERING AF NYE FILER
-      # Vi logger ind på One.com, fjerner det gamle deploy-rod fra den forkerte rod-mappe,
-      # og uploader derefter alt det nye direkte igennem den korrekte 'webroots'-genvej.
-      - name: Cleanup Old Junk & Mirror to Real Webroot
+      # Vi logger ind på One.com på én enkelt uafbrudt linje. Den sletter først det gamle 
+      # rod i den forkerte rodmappe og overfører bagefter alt til den rigtige 'webroots'-sti.
+      - name: Cleanup & Mirror to Real Webroot
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "
-            set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no';
-            
-            echo '=== START RENGØRING AF GAMMELT DEPLOY-ROD ===';
-            rm -f ./index.html ./favicon.svg ./README.md ./.DS_Store ./.gitattributes;
-            rm -rf ./ai ./cv ./dashboard ./data ./amateulytics.com;
-            
-            echo '=== START DEPLOY TIL DEN RIGTIGE WEBROOT/FILES ===';
-            mirror -R --verbose ./ ./webroots/amateulytics.com/files/;
-            
-            quit;
-          " -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; rm -f ./index.html ./favicon.svg ./README.md ./.DS_Store ./.gitattributes; rm -rf ./ai ./cv ./dashboard ./data ./amateulytics.com; mirror -R --verbose ./ ./webroots/amateulytics.com/files/; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
