@@ -1,5 +1,5 @@
 # Navnet på denne automatiske arbejdsgang på GitHub Actions
-name: Deploy to One.com
+name: Find the Golden Path
 
 on:
   push:
@@ -17,10 +17,10 @@ jobs:
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Vi tvinger filerne direkte ind i den /files/ mappe, din File Manager viser
-      - name: SFTP Mirror to One.com Files
+      # Scriptet leder efter din 'sftp-test' mappe på alle tre niveauer
+      - name: Locate sftp-test folder
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --verbose ./ ./amateulytics.com/files/; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; echo '=== KIGGER I RODEN ==='; ls; echo '=== KIGGER I AMATEULYTICS.COM ==='; ls amateulytics.com; echo '=== KIGGER I FILES ==='; ls amateulytics.com/files; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
