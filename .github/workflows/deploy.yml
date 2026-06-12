@@ -1,6 +1,12 @@
-# Navnet på denne automatiske arbejdsgang på GitHub Actions
-name: Map Entire Directory Structure
+# ==========================================
+# GITHUB ACTIONS – AUTOMATISK DEPLOY TIL ONE.COM
+# ==========================================
+# Dette script kører fuldstændig automatisk i skyen hos GitHub,
+# hver gang du trykker på 'Push origin' i GitHub Desktop.
 
+name: Deploy to One.com via Webroots
+
+# Scriptet lytter kun på ændringer, der pushes til din primære 'main' branch
 on:
   push:
     branches:
@@ -11,16 +17,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. HENTER KODEN FRA GITHUB
+      # Henter alle dine filer og mapper fra dit GitHub-arkiv ind på den midlertidige server
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. INSTALLERER SFTP-KLIENTEN (LFTP)
+      # One.com kræver en sikker SFTP-forbindelse. Vi installerer værktøjet 'lftp' til opgaven.
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Dette trin dumper HELE mappestrukturen råt ud i loggen
-      - name: Dump All Paths
+      # 3. OPRYDNING AF GAMMELT ROD & SYNKRONISERING AF NYE FILER
+      # Vi logger ind på One.com, fjerner det gamle deploy-rod fra den forkerte rod-mappe,
+      # og uploader derefter alt det nye direkte igennem den korrekte 'webroots'-genvej.
+      - name: Cleanup Old Junk & Mirror to Real Webroot
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; find -d 3 .; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "
+            set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no';
+            
+            echo '=== START RENGØRING AF GAMMELT DEPLOY-ROD ===';
+            rm -f ./index.html ./favicon.svg ./README.md ./.DS_Store ./.gitattributes;
+            rm -rf ./ai ./cv ./dashboard ./data ./amateulytics.com;
+            
+            echo '=== START DEPLOY TIL DEN RIGTIGE WEBROOT/FILES ===';
+            mirror -R --verbose ./ ./webroots/amateulytics.com/files/;
+            
+            quit;
+          " -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
