@@ -2,7 +2,7 @@ name: Deploy to One.com
 on:
   push:
     branches:
-      - main # Kører automatisk, hver gang du trykker på 'Push origin' i GitHub Desktop
+      - main
 
 jobs:
   deploy:
@@ -11,12 +11,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: FTP Deploy to One.com
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: SFTP Deploy to One.com
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
-          server: ssh.c4ew2s88y.service.one # Den nye, præcise host fra One.com
-          port: 22 # Porten til sikker SFTP
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: /www/ 
+          server: ssh.c4ew2s88y.service.one
+          port: 22
+          local_path: './*'
+          remote_path: '/www' # Dette er din live-mappe på One.com
