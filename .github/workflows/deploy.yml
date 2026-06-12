@@ -19,4 +19,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
-          server-dir: /httpdocs/ # Skulle den fejle på mappen, retter vi den bare til /www/ bagefter
+          server-dir: /www/ 
