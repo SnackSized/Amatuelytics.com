@@ -1,33 +1,35 @@
-# Navnet på denne automatiske arbejdsgang
+# Navnet på denne automatiske arbejdsgang på GitHub Actions
 name: Deploy to One.com
 
-# Kører automatisk, hver gang du trykker på 'Push origin' i GitHub Desktop
+# Definerer, hvad der trigger scriptet til at starte
 on:
   push:
     branches:
-      - main
+      - main # Scriptet kører KUN, når du trykker 'Push origin' på din 'main'-branch i GitHub Desktop
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # GitHub starter en lynhurtig, virtuel Linux-server til opgaven
     
     steps:
-      # Trin 1: Hent din kode fra GitHub-arkivet ind på den virtuelle server
+      # Trin 1: Hent dine filer (index.html, dashboard-mappen osv.) fra GitHub ind på den virtuelle server
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Trin 2: Forbind via ægte SFTP og synkroniser filerne
+      # Trin 2: Forbind og overfør filer via den officielle actions-hub SFTP-klient
       - name: SFTP Deploy to One.com
-        uses: lpress/sftp-deploy-action@v1.1.2
+        uses: actions-hub/sftp@v1.4.0 # Den officielle, bundsolide SFTP-pakke
+        
+        # Her defineres serverforbindelsen som system-miljøvariabler (env)
+        env:
+          HOST: ssh.c4ew2s88y.service.one # Din specifikke SFTP-server hos One.com
+          PORT: 22                         # Porten til den sikre forbindelse
+          USERNAME: ${{ secrets.FTP_USERNAME }} # Dit hemmelige brugernavn fra GitHub Secrets
+          PASSWORD: ${{ secrets.FTP_PASSWORD }} # Dit hemmelige FTP-kodeord fra GitHub Secrets
+          
+        # Her gives de præcise kommandoer til, HVAD der skal overføres, og HVORHEN
         with:
-          # Serveroplysninger
-          server: ssh.c4ew2s88y.service.one
-          port: 22
-          
-          # Autentificering fra dine GitHub Secrets
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          
-          # Stier
-          local_dir: './'      # Tag alt indhold fra din lokale GitHub-mappe
-          remote_dir: './www'   # Læg det direkte IND i den eksisterende www-mappe
+          arguments: |
+            -R
+            local_dir: './'
+            remote_dir: '/www'
