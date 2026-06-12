@@ -19,29 +19,10 @@ jobs:
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Vi samler alt i én berygtet LFTP-session
+      # Vi kører alt på én linje for at forhindre, at lftp taber forbindelsen
       - name: SFTP Mirror to Root and Webroots
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "
-            set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no';
-            
-            echo '=== 1. DEPLOYER FORSIDE TIL HOVEDDOMÆNE (RODEN) ===';
-            mirror -R --verbose --exclude-glob .git* --exclude-glob .github* --exclude ai/ --exclude cv/ --exclude dashboard/ --exclude data/ ./ ./;
-            
-            echo '=== 2. DEPLOYER TIL AI SUBDOMÆNE ===';
-            mirror -R --verbose ./ai/ /webroots/b3f97a47/;
-            
-            echo '=== 3. DEPLOYER TIL CV SUBDOMÆNE ===';
-            mirror -R --verbose ./cv/ /webroots/b5eb7626/;
-            
-            echo '=== 4. DEPLOYER TIL DASHBOARD SUBDOMÆNE ===';
-            mirror -R --verbose ./dashboard/ /webroots/be5652e7/;
-            
-            echo '=== 5. DEPLOYER TIL DATA SUBDOMÆNE ===';
-            mirror -R --verbose ./data/ /webroots/a5402042/;
-            
-            quit;
-          " -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --verbose --exclude-glob .git* --exclude-glob .github* --exclude ai/ --exclude cv/ --exclude dashboard/ --exclude data/ ./ ./; mirror -R --verbose ./ai/ /webroots/b3f97a47/; mirror -R --verbose ./cv/ /webroots/b5eb7626/; mirror -R --verbose ./dashboard/ /webroots/be5652e7/; mirror -R --verbose ./data/ /webroots/a5402042/; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
