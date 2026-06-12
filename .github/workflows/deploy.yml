@@ -1,6 +1,7 @@
 # Navnet på denne automatiske arbejdsgang på GitHub Actions
 name: Deploy to One.com
 
+# Kører automatisk, hver gang du trykker på 'Push origin' i GitHub Desktop
 on:
   push:
     branches:
@@ -11,16 +12,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Trin 1: Hent dine filer fra GitHub ind på den virtuelle server
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Trin 2: Installer lftp
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Detektiv-trin: Vi lister mapperne i stedet for at uploade
-      - name: Debug One.com Directory Structure
+      # Trin 3: Forbind via SFTP og læg filerne i den RIGTIGE domænemappe
+      - name: SFTP Mirror to One.com
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; ls; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --verbose ./ ./amateulytics.com/; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
