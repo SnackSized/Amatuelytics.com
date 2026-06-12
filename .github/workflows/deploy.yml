@@ -1,7 +1,7 @@
 # ==========================================
-# GITHUB ACTIONS – AUTOMATISK DEPLOY TIL ONE.COM
+# GITHUB ACTIONS – AFSLØR SKJULTE SYSTEM MAPPER
 # ==========================================
-name: Clean Deploy to Domain Root
+name: Reveal Hidden Subdomain Paths
 
 on:
   push:
@@ -19,11 +19,11 @@ jobs:
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Vi uploader direkte til den absolutte rod (./) uden om undermapper.
-      # Vi bruger --delete, så lftp tvinger serveren til at matche dit GitHub-arkiv 100%.
-      - name: SFTP Mirror to Root
+      # Vi beder lftp om at gå helt op i helikopteren og vise ALLE mapper,
+      # også dem der ligger uden for den normale visning.
+      - name: Audit Real Directory Tree
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --delete --verbose ./ ./; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; pwd; echo '=== LISTER ALT FRA BRUGER-ROD ==='; ls -la; echo '=== LEDER EFTER SUBDOMÆNER ==='; find -d 2; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
