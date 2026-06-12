@@ -1,35 +1,29 @@
 # Navnet på denne automatiske arbejdsgang på GitHub Actions
 name: Deploy to One.com
 
-# Definerer, hvad der trigger scriptet til at starte
+# Kører automatisk, hver gang du trykker på 'Push origin' i GitHub Desktop
 on:
   push:
     branches:
-      - main # Scriptet kører KUN, når du trykker 'Push origin' på din 'main'-branch i GitHub Desktop
+      - main
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest # GitHub starter en lynhurtig, virtuel Linux-server til opgaven
+    runs-on: ubuntu-latest # Starter en standard virtuel Linux-server hos GitHub
     
     steps:
-      # Trin 1: Hent dine filer (index.html, dashboard-mappen osv.) fra GitHub ind på den virtuelle server
+      # Trin 1: Hent dine filer fra GitHub ind på den virtuelle server
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Trin 2: Forbind og overfør filer via den officielle actions-hub SFTP-klient
-      - name: SFTP Deploy to One.com
-        uses: actions-hub/sftp@v1.4.0 # Den officielle, bundsolide SFTP-pakke
-        
-        # Her defineres serverforbindelsen som system-miljøvariabler (env)
+      # Trin 2: Installer lftp (standard Linux-værktøj til filoverførsel)
+      - name: Install LFTP
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      # Trin 3: Forbind og synkroniser filerne direkte til One.com via rå SFTP
+      - name: SFTP Mirror to One.com
         env:
-          HOST: ssh.c4ew2s88y.service.one # Din specifikke SFTP-server hos One.com
-          PORT: 22                         # Porten til den sikre forbindelse
-          USERNAME: ${{ secrets.FTP_USERNAME }} # Dit hemmelige brugernavn fra GitHub Secrets
-          PASSWORD: ${{ secrets.FTP_PASSWORD }} # Dit hemmelige FTP-kodeord fra GitHub Secrets
-          
-        # Her gives de præcise kommandoer til, HVAD der skal overføres, og HVORHEN
-        with:
-          arguments: |
-            -R
-            local_dir: './'
-            remote_dir: '/www'
+          # Henter dine hemmelige koder fra GitHub Secrets
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
