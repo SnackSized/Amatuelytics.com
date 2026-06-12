@@ -1,7 +1,7 @@
 # ==========================================
-# GITHUB ACTIONS – AFSLØR SKJULTE SYSTEM MAPPER
+# GITHUB ACTIONS – UNDERSØG WEBROOTS-LINKET
 # ==========================================
-name: Reveal Hidden Subdomain Paths
+name: Deep Scan of Webroots Link
 
 on:
   push:
@@ -19,11 +19,10 @@ jobs:
       - name: Install LFTP
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # Vi beder lftp om at gå helt op i helikopteren og vise ALLE mapper,
-      # også dem der ligger uden for den normale visning.
-      - name: Audit Real Directory Tree
+      # Vi tvinger lftp til at gå ind i 'webroots' mappen og lister ALT derinde i to niveauer
+      - name: Scan Inside Webroots
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; pwd; echo '=== LISTER ALT FRA BRUGER-ROD ==='; ls -la; echo '=== LEDER EFTER SUBDOMÆNER ==='; find -d 2; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; echo '=== INDHOLD AF WEBROOTS ==='; find -d 2 ./webroots; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
