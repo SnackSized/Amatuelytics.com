@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Matematik Øen - Det Magiske Eventyr</title>
+    <title>Matematik Øen - Fri Udforskning</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="ui-bar">
-        <div class="ui-element">⭐ Hero Level: <span id="hero-level">1</span></div>
+        <div class="ui-element">⭐ Hero: Lvl <span id="hero-level">1</span></div>
         <div class="ui-element">🪙 Guld: <span id="res-gold">0</span></div>
         <div class="ui-element">🪵 Træ: <span id="res-wood">0</span></div>
-        <div class="ui-element">🏰 Base Level: <span id="base-level">0</span></div>
+        <div class="ui-element">🏰 Base: Lvl <span id="base-level">0</span></div>
     </div>
 
     <div id="game-container">
-        <div id="world-map"></div>
+        <canvas id="gameCanvas"></canvas>
     </div>
 
     <div id="controls-bar">
@@ -26,10 +26,10 @@
 
     <div id="math-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>Lås kisten op! 🗝️</h2>
+            <h2>Lås op! 🗝️</h2>
             <p id="math-question">Hvad er 5 x 7?</p>
             <input type="number" id="math-answer" pattern="[0-9]*" inputmode="numeric" placeholder="Svar her...">
-            <button onclick="checkAnswer()">Åben Kiste!</button>
+            <button onclick="checkAnswer()">Svar</button>
             <p id="math-feedback" class="feedback"></p>
         </div>
     </div>

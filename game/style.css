@@ -1,9 +1,8 @@
-/* Nulstilling og Mobiloptimering */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    user-select: none; /* Forhindrer tekstmarkering på touch-skærme */
+    user-select: none;
     -webkit-user-select: none;
 }
 
@@ -17,7 +16,6 @@ body {
     height: 100vh;
 }
 
-/* UI Top Bar */
 #ui-bar {
     background-color: #1a252f;
     display: flex;
@@ -28,52 +26,24 @@ body {
     border-bottom: 3px solid #34495e;
 }
 
-/* Spilverden / Sandbox Container */
+/* Containeren strækker sig og holder canvas centreret */
 #game-container {
     flex: 1;
-    overflow: auto;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    background-color: #222;
+    position: relative;
+    overflow: hidden;
 }
 
-/* Grid-kort inspireret af 3x3-island */
-#world-map {
-    display: grid;
-    grid-template-columns: repeat(4, 80px);
-    grid-template-rows: repeat(4, 80px);
-    gap: 8px;
+canvas {
+    background-color: #27ae60; /* Grønt græs-landskab */
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    max-width: 100%;
+    max-height: 100%;
 }
 
-/* Enkelt felt på kortet */
-.tile {
-    background-color: #27ae60;
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    transition: transform 0.1s, background-color 0.3s;
-}
-
-.tile:active {
-    transform: scale(0.95);
-}
-
-/* Låste felter (Tåge / Fog of War) */
-.tile.locked {
-    background-color: #7f8c8d;
-    cursor: not-allowed;
-}
-.tile.locked::after {
-    content: "🔒";
-    font-size: 1.2rem;
-}
-
-/* Bundmenu til handlinger */
 #controls-bar {
     background-color: #1a252f;
     padding: 15px;
@@ -98,7 +68,7 @@ button:active {
     background-color: #d35400;
 }
 
-/* Matematik Modal (Popup) */
+/* Modal Popup standard */
 .modal {
     position: fixed;
     top: 0;
@@ -123,17 +93,11 @@ button:active {
     text-align: center;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
 .modal-content h2 {
     margin-bottom: 15px;
     color: #f1c40f;
-}
-
-.modal-content p {
-    font-size: 1.4rem;
-    margin-bottom: 20px;
 }
 
 input[type="number"] {
