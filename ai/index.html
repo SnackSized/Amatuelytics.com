@@ -1,124 +1,134 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Status: 404 Not Found — Domain Owner found beers and decided prioritise those...</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/latin-modern-roman@4.5.0/index.css">
-    <style>
-        body {
-            font-family: "Latin Modern Roman", "Times New Roman", serif;
-            background-color: #fafaf7; /* Klassisk, blød papirsfarve */
-            color: #111111;
-            line-height: 1.6;
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 650px;
-            width: 100%;
-            background: #ffffff;
-            padding: 40px;
-            border: 1px solid #dddddd;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        h1 {
-            font-size: 1.8em;
-            text-align: center;
-            margin-bottom: 0.2em;
-            font-weight: normal;
-        }
-        .author {
-            text-align: center;
-            font-size: 1.1em;
-            font-style: italic;
-            margin-bottom: 2em;
-            color: #444;
-        }
-        .abstract {
-            margin: 2em 0;
-            padding: 0 20px;
-            font-size: 0.95em;
-            text-align: justify;
-        }
-        .abstract-title {
-            text-align: center;
-            font-weight: bold;
-            font-variant: small-caps;
-            margin-bottom: 0.5em;
-        }
-        .error-box {
-            background-color: #fcf8f2;
-            border-left: 3px solid #c07000;
-            padding: 15px;
-            margin: 2em 0;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
-        .btn-back {
-            display: block;
-            width: fit-content;
-            margin: 3em auto 0 auto;
-            padding: 8px 16px;
-            color: #004488;
-            text-decoration: none;
-            border: 1px solid #004488;
-            font-variant: small-caps;
-            transition: all 0.2s ease;
-        }
-        .btn-back:hover {
-            background-color: #004488;
-            color: white;
-        }
-        .footer {
-            margin-top: 4em;
-            text-align: center;
-            font-size: 0.8em;
-            color: #888;
-            border-top: 1px dashed #ccc;
-            padding-top: 1em;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amateulytics — Pipeline Corrupted</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/latin-modern-webfont@1.0.0/style/latin-modern-roman.min.css">
+<style>
+  /* ─── LATEX MONOCHROME THEME ─────────────────────── */
+  :root {
+    --bg:        #ffffff;
+    --text:      #000000;
+    --border:    #000000;
+    --muted:     #444444;
+    --light-grey:#f9f9f9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Latin Modern Roman", Georgia, serif;
+    font-size: 14pt;
+    line-height: 1.6;
+    max-width: 680px;
+    margin: 80px auto;
+    padding: 0 20px;
+    text-align: justify;
+  }
+
+  /* ─── LAYOUT ARCHITECTURE ────────────────────────── */
+  .incident-report {
+    border: 1px solid var(--border);
+    padding: 40px;
+    background: var(--light-grey);
+    margin-bottom: 3rem;
+  }
+
+  h1 {
+    font-size: 1.8em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 25px;
+    font-variant: small-caps;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 15px;
+  }
+
+  .lead-text {
+    font-size: 12pt;
+    font-style: italic;
+    margin-bottom: 30px;
+    color: #000;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: bold;
+    font-variant: small-caps;
+    letter-spacing: 0.5px;
+    margin: 25px 0 10px 0;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 3px;
+  }
+
+  /* ─── LISTS & MITIGATION BLOCK ───────────────────── */
+  ul {
+    margin-left: 20px;
+    margin-bottom: 20px;
+    font-size: 12pt;
+  }
+
+  li {
+    margin-bottom: 8px;
+    list-style-type: square;
+  }
+
+  li strong {
+    font-variant: small-caps;
+    letter-spacing: 0.5px;
+  }
+
+  .mitigation-box {
+    border-left: 3px solid var(--border);
+    padding-left: 15px;
+    font-style: italic;
+    font-size: 12pt;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  /* ─── FOOTER ─────────────────────────────────────── */
+  footer {
+    font-size: 10pt;
+    color: #555;
+    text-align: center;
+    margin-top: 5rem;
+  }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Amateulytics Research Notes</h1>
-    <div class="author">Domain Owner</div>
+<div class="incident-report">
+  <h1>404: The Pipeline is Corrupted</h1>
+  
+  <p class="lead-text">
+    The asset you're looking for was permanently mangled by an untested 3:00 AM script push. 
+    The raw data is gone, the keys are overwritten, and the database is currently bleeding null values.
+  </p>
 
-    <hr style="border: 0; border-top: 1px solid #111; margin: 1em 0;">
+  <h2>The Fallout:</h2>
+  <ul>
+    <li><strong>The Dashboard:</strong> It's completely hallucinating metrics for the C-suite.</li>
+    <li><strong>The Consultants:</strong> They’ve already copied the broken charts into a 200-slide PowerPoint, billed us $450k, and left.</li>
+    <li><strong>The Git Blame:</strong> The script that caused this was pushed using your credentials.</li>
+  </ul>
 
-    <div class="abstract">
-        <div class="abstract-title">Abstract</div>
-        <p>
-            Dette dokument beskriver et midlertidigt tomrum i rum-tid-kontinuet på domænet 
-            <strong id="current-subdomain">amateulytics.com</strong>. Data-pakkerne er afsendt 
-            fra GitHub, men pipelines og det tilhørende neurale netværk er i skrivende stund 
-            stadig ved at kompilere de endelige scripts. 
-        </p>
-    </div>
-
-    <div class="error-box">
-        *** ERROR CODE: 404_DOCUMENT_NOT_FOUND ***<br>
-        STATUS: UNDER_CONSTRUCTION<br>
-        LOCATION: <span id="error-url">Loading...</span><br>
-        ACTION: Genindlæs siden om lidt, eller træk dig sikkert tilbage.
-    </div>
-
-    <a href="https://amateulytics.com" class="btn-back">[\leftarrow Gå tilbage til hovedsiden]</a>
-
-    <div class="footer">
-        Typerun via GitHub Actions &bull; lftp mirror &bull; Stand: Juni 2026
-    </div>
+  <h2>Recommended Mitigation:</h2>
+  <div class="mitigation-box">
+    Submit an expense report for a "critical data recovery lunch," close your laptop, and walk away. 
+    If anyone asks, you've been warning them about data governance for months.
+  </div>
 </div>
 
-<script>
-    // Lille smart script, der automatisk finder ud af, hvilken adresse gæsten landede på
-    document.getElementById('current-subdomain').innerText = window.location.hostname;
-    document.getElementById('error-url').innerText = window.location.href;
-</script>
+<footer>
+  <span>Amateulytics Infrastructure Engine v2 (State: Panicking)</span><br>
+  <a href="https://amateulytics.com" style="color: var(--text); text-decoration: underline; font-size: 11pt;">Return to main index</a>
+</footer>
 
 </body>
 </html>
