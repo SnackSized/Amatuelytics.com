@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Matematik Øen - Det Magiske Eventyr</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="ui-bar">
+        <div class="ui-element">⭐ Hero Level: <span id="hero-level">1</span></div>
+        <div class="ui-element">🪙 Guld: <span id="res-gold">0</span></div>
+        <div class="ui-element">🪵 Træ: <span id="res-wood">0</span></div>
+        <div class="ui-element">🏰 Base Level: <span id="base-level">0</span></div>
+    </div>
+
+    <div id="game-container">
+        <div id="world-map"></div>
+    </div>
+
+    <div id="controls-bar">
+        <button onclick="upgradeBase()">Opgradér Base (10 Guld, 10 Træ)</button>
+        <button onclick="trainHero()">Træn Hero (15 Guld)</button>
+    </div>
+
+    <div id="math-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Lås kisten op! 🗝️</h2>
+            <p id="math-question">Hvad er 5 x 7?</p>
+            <input type="number" id="math-answer" pattern="[0-9]*" inputmode="numeric" placeholder="Svar her...">
+            <button onclick="checkAnswer()">Åben Kiste!</button>
+            <p id="math-feedback" class="feedback"></p>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
