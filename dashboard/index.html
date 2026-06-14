@@ -167,10 +167,10 @@
 
 <section class="dashboard-post">
   <div class="post-title">Energy Grid Observations: DK1 (Vest)</div>
-  <div class="post-meta">Market: Energinet DataPortal · Zone: DK1 · Unit: øre/kWh inkl. afgifter &amp; moms</div>
+  <div class="post-meta">Market: Strømligning API · Zone: DK1 · Unit: øre/kWh inkl. afgifter &amp; moms</div>
   
   <p class="post-description">
-    Overvågning af den fulde forbrugspris på det vestdanske elmarked (DK1). Datagrundlaget viser en 5-dages tidsserie samt indeværende døgn (og det efterfølgende døgn, såfremt priserne frigives efter kl. 13.00). Prisen er beregnet med tillæg af standard elafgift, nettarif og moms.
+    Overvågning af den fulde forbrugspris på det vestdanske elmarked (DK1). Datagrundlaget viser en 5-dages tidsserie samt indeværende døgn (og det efterfølgende døgn, såfremt priserne frigives efter kl. 13.00). Prisen leveres fuldt opdateret med de reelle nettariffer, statslige elafgifter samt moms direkte fra Strømligning.dk.
   </p>
 
   <table class="elec-summary-table">
@@ -192,14 +192,14 @@
     </tbody>
   </table>
 
-  <div class="chart-container">
+  <div class="chart-container" style="height: 350px;">
     <canvas id="elecChart"></canvas>
   </div>
   <div id="elec-error" class="err" style="display:none"></div>
 </section>
 
 <footer>
-  <span>Pipeline: Alpha Vantage API &amp; Energinet Data Engine</span><br>
+  <span>Pipeline: Alpha Vantage API &amp; Strømligning Engine</span><br>
   <span id="last-updated">Sidst synkroniseret: —</span>
 </footer>
 
@@ -207,9 +207,9 @@
 const CONFIG = {
   ticker: "RR.L",
   alphaVantageKey: "FR3RHUND56FHKJG3",
-  elZone: "DK1",
+  elZone: "dk1", // Strømligning foretrækker små bogstaver
   stockRefreshMs: 5 * 60 * 1000 + 1000, 
-  elecRefreshMs:  30 * 60 * 1000 // Opdaterer hvert 30. minut for at fange kl. 13-opdateringen hurtigt
+  elecRefreshMs:  30 * 60 * 1000 
 };
 
 let elecChartInstance = null;
@@ -257,63 +257,48 @@ async function refreshStock() {
   document.getElementById('last-updated').textContent = 'Sidst synkroniseret: ' + new Date().toLocaleTimeString('da-DK');
 }
 
-/* ── Tarif- & Prisberegner (Inkl. Afgifter og Moms) ─────────────── */
-function calculateFullPrice(spotMWh, hour) {
-  // 1. Konverter DKK/MWh til øre/kWh (divider med 10)
-  const spotOre = spotMWh / 10;
-  
-  // 2. Statslige afgifter og distributionstakster (DK1 2026 estimater)
-  const elafgift = 76.1; // Statens elafgift pr. kWh i øre
-  
-  // Nettarif C (Eksempel baseret på gennemsnitlig vinter/sommer distributionstakst)
-  // differentieret efter tid: Peak (17-21) er dyrere, natten er billig.
-  let nettarif = 40.0; 
-  if (hour >= 17 && hour < 21) {
-    nettarif = 95.0; // Spidsbelastning
-  } else if (hour >= 0 && hour < 6) {
-    nettarif = 18.0; // Nat-rabat
-  }
-
-  // 3. Læg det sammen og tilføj 25% moms
-  const samletUdenMoms = spotOre + elafgift + nettarif;
-  const samletMedMoms = samletUdenMoms * 1.25;
-  
-  return samletMedMoms;
-}
-
-/* ── Energy Engine (Energinet DataPortal API - 5 dages serie) ────── */
+/* ── Energy Engine (Strømligning.dk API - 5 dages fuld prisserie) ── */
 async function refreshElectricity() {
   const errorEl = document.getElementById('elec-error');
-  errorEl.style.display = 'none';
+  if (errorEl) errorEl.style.display = 'none';
+  
   try {
-    // Vi beregner dato-range: 5 dage tilbage i tiden til i dag/i morgen
-    const offsetDate = new Date();
-    offsetDate.setDate(offsetDate.getDate() - 5);
-    const startStr = offsetDate.toISOString().slice(0, 10);
+    // Strømligning henter automatisk dagsaktuelle og kommende priser på /api/prices/
+    // For at bygge en historisk tidsserie kalder vi deres range-funktion.
+    const end = new Date();
+    // Hvis klokken er efter 13, tilføjer vi i morgen til tidsserien
+    if (end.getHours() >= 13) {
+      end.setDate(end.getDate() + 1);
+    }
+    const start = new Date();
+    start.setDate(start.getDate() - 5);
 
-    // SQL-lignende kald direkte til Energinets Elspot-database
-    const query = `Query={\"filters\":{\"PriceArea\":[\"${CONFIG.elZone}\"]},\"columns\":[\"HourUTC\",\"HourDK\",\"SpotPriceDKK\"],\"start\":\"${startStr}\",\"sort\":\"HourUTC ASC\"}`;
-    const url = `https://api.energinet.dk/dataset/Elspotprices?${query}`;
+    const startStr = start.toISOString().slice(0, 10);
+    const endStr = end.toISOString().slice(0, 10);
+
+    // Henter priser for DK1 inkl. fuld transport (N1 tarif anvendes som standard vest-eksempel), afgifter og moms
+    const url = `https://stromligning.dk/api/prices/${CONFIG.elZone}?start=${startStr}&end=${endStr}`;
     
     const r = await fetch(url);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const responseData = await r.json();
-    const records = responseData.records;
+    if (!r.ok) throw new Error('HTTP status ' + r.status);
+    
+    const records = await r.json();
+    if (!records || !records.length) throw new Error('Ingen data returneret fra Strømligning.');
 
-    if (!records || !records.length) throw new Error('Ingen data returneret fra Energinet');
-
-    // Formater data til tidsserien
+    // Strømligning returnerer prisen i KR pr. kWh (f.eks. 2.34) -> Vi ganger med 100 for at få øre/kWh
     const formattedData = records.map(rec => {
-      const dateObj = new Date(rec.HourDK);
-      const hour = dateObj.getHours();
+      const dateObj = new Date(rec.timestamp || rec.time);
       return {
         timestamp: dateObj,
-        label: dateObj.toLocaleDateString('da-DK', { day:'numeric', month:'short' }) + ` ${String(hour).padStart(2,'0')}:00`,
-        price: calculateFullPrice(rec.SpotPriceDKK, hour)
+        label: dateObj.toLocaleDateString('da-DK', { day:'numeric', month:'short' }) + ` ${String(dateObj.getHours()).padStart(2,'0')}:00`,
+        price: rec.price * 100 // Konverter DKK til øre
       };
     });
 
-    // Find nøgletal for I DAG specifikt
+    // Sorterer kronologisk
+    formattedData.sort((a, b) => a.timestamp - b.timestamp);
+
+    // Find nøgletal for I DAG specifikt (til tabellen)
     const todayStr = new Date().toDateString();
     const todayRecords = formattedData.filter(d => d.timestamp.toDateString() === todayStr);
     
@@ -332,12 +317,15 @@ async function refreshElectricity() {
       document.getElementById('elec-avg').textContent = avgToday.toFixed(1) + ' øre';
     }
 
-    // Tegn eller opdater det monokrome diagram
+    // Tegn det monokrome diagram
     renderMonochromeChart(formattedData);
 
   } catch (e) {
-    errorEl.style.display = 'block';
-    errorEl.textContent = 'Energinet Netværksfejl: ' + e.message;
+    console.error(e);
+    if (errorEl) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = 'Strømligning API-fejl: ' + e.message;
+    }
   }
 }
 
@@ -347,8 +335,6 @@ function renderMonochromeChart(dataPoints) {
   
   const labels = dataPoints.map(d => d.label);
   const prices = dataPoints.map(d => d.price);
-  
-  // Dummy data til histogram over forbrug (kWh) – ændres når du kobler dit forbrug på
   const dummyForbrugHistogram = dataPoints.map(() => null); 
 
   if (elecChartInstance) {
@@ -361,20 +347,20 @@ function renderMonochromeChart(dataPoints) {
       labels: labels,
       datasets: [
         {
-          label: 'Total Elpris (øre/kWh)',
+          label: 'Fuld forbrugspris (øre/kWh)',
           data: prices,
           borderColor: '#000000',
           borderWidth: 1.5,
-          pointRadius: 0, // Ingen store cirkler for at bevare ren linje
+          pointRadius: 0,
           pointHoverRadius: 4,
           fill: false,
           yAxisID: 'y'
         },
         {
           type: 'bar',
-          label: 'Hustandens Forbrug (kWh) [Klargjort]',
+          label: 'Husstandens Forbrug (kWh) [Klargjort]',
           data: dummyForbrugHistogram,
-          backgroundColor: 'rgba(0, 0, 0, 0.15)', // Svagt histogram i baggrunden
+          backgroundColor: 'rgba(0, 0, 0, 0.15)',
           borderColor: '#000000',
           borderWidth: 0.5,
           yAxisID: 'y1'
@@ -390,7 +376,7 @@ function renderMonochromeChart(dataPoints) {
           ticks: {
             color: '#000000',
             font: { family: '"Latin Modern Roman", serif', size: 10 },
-            maxTicksLimit: 12 // Forhindrer at x-aksen bliver mast sammen
+            maxTicksLimit: 10
           },
           border: { color: '#000000' }
         },
@@ -400,7 +386,7 @@ function renderMonochromeChart(dataPoints) {
           position: 'left',
           title: {
             display: true,
-            text: 'Pris (øre/kWh)',
+            text: 'Total Pris (øre/kWh)',
             color: '#000000',
             font: { family: '"Latin Modern Roman", serif', size: 11 }
           },
@@ -421,7 +407,7 @@ function renderMonochromeChart(dataPoints) {
             color: '#000000',
             font: { family: '"Latin Modern Roman", serif', size: 11 }
           },
-          grid: { drawOnChartArea: false }, // Undgår dobbelt grid-linjer
+          grid: { drawOnChartArea: false },
           ticks: {
             color: '#000000',
             font: { family: '"Latin Modern Roman", serif', size: 11 }
