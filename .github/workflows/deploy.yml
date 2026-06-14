@@ -1,6 +1,5 @@
 name: Deploy to One.com
 
-# Udløser workflowet automatisk hver gang du pusher til din hoved-branch
 on:
   push:
     branches:
@@ -24,18 +23,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # Henter din kode ud på GitHubs server, så vi kan arbejde med den
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Swapper din placeholder ud med din rigtige API-nøgle i stock.php
+      # NØDVENDIGT STEP: Installerer lftp på GitHubs midlertidige server, så den genkender kommandoen
+      - name: Install lftp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
       - name: Inject Alpha Vantage API Key Secret
         env:
           AV_KEY: ${{ secrets.ALPHA_VANTAGE_KEY }}
         run: |
           sed -i "s/###ALPHA_VANTAGE_KEY_PLACEHOLDER###/$AV_KEY/g" ./dashboard/stock.php
 
-      # Spejler filerne over til de korrekte silo-mapper hos one.com
       - name: SFTP Mirror to Exact Webroot Silos
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
