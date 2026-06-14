@@ -40,17 +40,12 @@ jobs:
         run: |
           sed -i "s/###ALPHA_VANTAGE_KEY_PLACEHOLDER###/$AV_KEY/g" ./dashboard/stock.php
 
+      # SIKRING: Opretter mapperne lokalt hvis de mangler i Git, så lftp ikke crasher
+      - name: Ensure subfolders exist
+        run: mkdir -p ai avg cv dashboard data game
+
       - name: SFTP Mirror to Exact Webroot Silos
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-        run: |
-          lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; \
-          mirror -R --verbose --exclude-glob .git* --exclude-glob .github* --exclude ai/ --exclude avg/ --exclude cv/ --exclude dashboard/ --exclude data/ --exclude game/ ./ /webroots/9509701a/; \
-          mirror -R --verbose ./ai/ /webroots/b3f97a47/; \
-          mirror -R --verbose ./avg/ /webroots/86066441/; \
-          mirror -R --verbose ./cv/ /webroots/b5eb7626/; \
-          mirror -R --verbose ./dashboard/ /webroots/be5652e7/; \
-          mirror -R --verbose ./data/ /webroots/a5402042/; \
-          mirror -R --verbose ./game/ /webroots/2ef87d80/; \
-          quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
+        run: lftp -e "set sftp:connect-program 'ssh -a -x -o StrictHostKeyChecking=no'; mirror -R --verbose --exclude-glob .git* --exclude-glob .github* --exclude ai/ --exclude avg/ --exclude cv/ --exclude dashboard/ --exclude data/ --exclude game/ ./ /webroots/9509701a/; mirror -R --verbose ./ai/ /webroots/b3f97a47/; mirror -R --verbose ./avg/ /webroots/86066441/; mirror -R --verbose ./cv/ /webroots/b5eb7626/; mirror -R --verbose ./dashboard/ /webroots/be5652e7/; mirror -R --verbose ./data/ /webroots/a5402042/; mirror -R --verbose ./game/ /webroots/2ef87d80/; quit" -u $FTP_USERNAME,$FTP_PASSWORD sftp://ssh.c4ew2s88y.service.one
