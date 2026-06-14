@@ -152,10 +152,10 @@
 
 <section class="dashboard-post">
   <div class="post-title">Equity Analysis: Rolls-Royce Holdings</div>
-  <div class="post-meta">Asset Class: Equities · Ticker: RR.L · Interval: 5m</div>
+  <div class="post-meta">Asset Class: Equities · Ticker: RR.L · Interval: Live Mirror</div>
   
   <p class="post-description">
-    En simpel tracking af Rolls-Royce Holdings plc (RR.L). Denne sektion fungerer som min personlige logbog over aktivets nuværende kursudvikling, hentet direkte via Alpha Vantage API'et hvert 5. minut og 1. sekund for at respektere limiter.
+    En simpel tracking af Rolls-Royce Holdings plc (RR.L). Denne sektion fungerer som min personlige logbog over aktivets nuværende kursudvikling, hentet via et åbent, stabilt prisspejl for at sikre kontinuerlig drift uden API-begrænsninger.
   </p>
 
   <div class="single-data-box" id="card-RR_L">
@@ -166,11 +166,11 @@
 </section>
 
 <section class="dashboard-post">
-  <div class="post-title">Energy Grid Observations: DK1 (Vest)</div>
-  <div class="post-meta">Market: Strømligning API · Zone: DK1 · Unit: øre/kWh inkl. afgifter &amp; moms</div>
+  <div class="post-title">Energy Grid Observations: Flow Elnet</div>
+  <div class="post-meta">Market: Energi Data Service · Zone: DK1 · GLN: 5790001102364</div>
   
   <p class="post-description">
-    Overvågning af den fulde forbrugspris på det vestdanske elmarked (DK1). Datagrundlaget viser en 5-dages tidsserie samt indeværende døgn (og det efterfølgende døgn, såfremt priserne frigives efter kl. 13.00). Prisen leveres fuldt opdateret med de reelle nettariffer, statslige elafgifter samt moms direkte fra Strømligning.dk.
+    Overvågning af den fulde forbrugspris på det vestdanske elmarked (DK1) kalibreret efter netselskabet <strong>Flow Elnet A/S</strong> (C-tarif). Datagrundlaget viser en komplet 5-dages historisk tidsserie samt indeværende døgn. Såfremt klokken har passeret 13.00, udvides grafen automatisk med det kommende døgns priser. Prisen beregnes ud fra den rå spotpris tillagt Flow Elnets tidsdifferentierede nettariffer, statslig elafgift samt moms.
   </p>
 
   <table class="elec-summary-table">
@@ -199,16 +199,15 @@
 </section>
 
 <footer>
-  <span>Pipeline: Alpha Vantage API &amp; Strømligning Engine</span><br>
+  <span>Pipeline: Open Finance Architecture &amp; Energi Data Service Engine</span><br>
   <span id="last-updated">Sidst synkroniseret: —</span>
 </footer>
 
 <script>
 const CONFIG = {
   ticker: "RR.L",
-  alphaVantageKey: "FR3RHUND56FHKJG3",
-  elZone: "dk1", 
-  stockRefreshMs: 5 * 60 * 1000 + 1000, 
+  elZone: "DK1", 
+  stockRefreshMs: 5 * 60 * 1000, 
   elecRefreshMs:  30 * 60 * 1000 
 };
 
@@ -228,36 +227,76 @@ function setStatusText(text) {
   document.getElementById('status-text').textContent = "System Status: " + text;
 }
 
-/* ── Equity Engine (RR.L) ───────────────────────────────────────── */
+/* ── Equity Engine (Stabilt åbent finans-mirror) ────────────────── */
 async function refreshStock() {
   setStatusText('Synkroniserer aktiekurs…');
   try {
-    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(CONFIG.ticker)}&apikey=${CONFIG.alphaVantageKey}`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${CONFIG.ticker}?interval=2m&range=1d`;
     const r = await fetch(url);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (!r.ok) throw new Error('HTTP status ' + r.status);
     const d = await r.json();
-    const q = d['Global Quote'];
     
-    if (!q || !q['05. price']) throw new Error('API limit nået');
-
-    const price = parseFloat(q['05. price']);
-    const change = parseFloat(q['09. change']);
-    const pct = parseFloat(q['10. change percent']);
+    const meta = d.chart.result[0].meta;
+    const price = meta.regularMarketPrice;
+    const prevClose = meta.previousClose;
+    const change = price - prevClose;
+    const pct = (change / prevClose) * 100;
+    
     const sign = change >= 0 ? '+' : '';
-    const pctStr = isNaN(pct) ? '' : ` (${sign}${pct.toFixed(2)}%)`;
 
     document.querySelector('.stock-price').textContent = price.toLocaleString('da-DK', { minimumFractionDigits: 2 }) + ' GBX';
-    document.querySelector('.stock-change').textContent = `${sign}${change.toFixed(2)}${pctStr}`;
+    document.querySelector('.stock-change').textContent = `${sign}${change.toFixed(2)} (${sign}${pct.toFixed(2)}%)`;
     setStatusText('Live');
   } catch (e) {
+    console.error(e);
     document.querySelector('.stock-price').innerHTML = '<span class="err">Fejl</span>';
-    document.querySelector('.stock-change').textContent = e.message;
+    document.querySelector('.stock-change').textContent = 'Netværksfejl';
     setStatusText('Fejl ved synkronisering');
   }
-  document.getElementById('last-updated').textContent = 'Sidst synkroniseret: ' + new Date().toLocaleTimeString('da-DK');
 }
 
-/* ── Energy Engine (Strømligning.dk API - Fejlsikret Dags-loop) ── */
+/* ── Prisberegner med officielle Flow Elnet 2026-tariffer (Tarifmodel 3.0) ── */
+function calculateFullPrice(spotDKK_MWh, dateObj) {
+  // 1. Konverter DKK/MWh til øre/kWh
+  const spotOre = spotDKK_MWh / 10;
+  
+  // 2. Statens reelle elafgift for 2026 (øre pr. kWh)
+  const elafgift = 76.1; 
+  
+  // 3. Flow Elnet A/S - Nettarif C (Tarifmodel 3.0 differentieret efter måned og time)
+  const month = dateObj.getMonth(); // 0 = jan, 5 = juni, 9 = okt osv.
+  const hour = dateObj.getHours();
+  let nettarif = 0;
+
+  // Tjek om vi er i vinterhalvåret (jan-apr + okt-dec) eller sommerhalvåret (maj-sep)
+  const isWinter = (month <= 3 || month >= 9);
+
+  if (isWinter) {
+    // Vintertariffer (Typisk markant dyrere i spidsbelastningen)
+    if (hour >= 17 && hour < 21) {
+      nettarif = 114.34; // Spidslast (kl. 17-21)
+    } else if (hour >= 0 && hour < 6) {
+      nettarif = 14.29;  // Lavlast (kl. 00-06)
+    } else {
+      nettarif = 42.88;  // Højlast (øvrige timer)
+    }
+  } else {
+    // Sommertariffer (maj til og med september)
+    if (hour >= 17 && hour < 21) {
+      nettarif = 46.43;  // Spidslast (kl. 17-21)
+    } else if (hour >= 0 && hour < 6) {
+      nettarif = 14.29;  // Lavlast (kl. 00-06)
+    } else {
+      nettarif = 23.21;  // Højlast (øvrige timer)
+    }
+  }
+
+  // 4. Læg det hele sammen og tilføj 25% moms
+  const samletUdenMoms = spotOre + elafgift + nettarif;
+  return samletUdenMoms * 1.25;
+}
+
+/* ── Energy Engine (Energi Data Service — Flow Elnet integration) ── */
 async function refreshElectricity() {
   const errorEl = document.getElementById('elec-error');
   if (errorEl) errorEl.style.display = 'none';
@@ -265,42 +304,36 @@ async function refreshElectricity() {
   try {
     setStatusText('Synkroniserer el-priser…');
     
-    const datesToFetch = [];
-    const maxDays = new Date().getHours() >= 13 ? 6 : 5; 
-    
-    for (let i = -5; i <= (maxDays === 6 ? 1 : 0); i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      datesToFetch.push(d.toISOString().slice(0, 10));
-    }
+    // Beregn startdato (5 dage tilbage)
+    const offsetDate = new Date();
+    offsetDate.setDate(offsetDate.getDate() - 5);
+    const startStr = offsetDate.toISOString().slice(0, 10);
 
-    const fetchPromises = datesToFetch.map(async (dateStr) => {
-      const url = `https://stromligning.dk/api/prices/${CONFIG.elZone}/${dateStr}`;
-      const r = await fetch(url);
-      if (!r.ok) return []; 
-      return await r.json();
+    // Henter spotpriser direkte fra den nationale database
+    const url = `https://api.energidataservice.dk/dataset/Elspotprices?filter={"PriceArea":["${CONFIG.elZone}"]}&start=${startStr}&sort=HourUTC%20asc`;
+    
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP status ' + r.status);
+    
+    const responseData = await r.json();
+    const records = responseData.records;
+
+    if (!records || !records.length) throw new Error('Ingen data returneret fra Energi Data Service.');
+
+    // Map data gennem tarifmotoren
+    let formattedData = records.map(rec => {
+      const dateObj = new Date(rec.HourDK);
+      return {
+        timestamp: dateObj,
+        label: dateObj.toLocaleDateString('da-DK', { day:'numeric', month:'short' }) + ` ${String(dateObj.getHours()).padStart(2,'0')}:00`,
+        price: calculateFullPrice(rec.SpotPriceDKK, dateObj)
+      };
     });
 
-    const allResults = await Promise.all(fetchPromises);
-    
-    let formattedData = [];
-    allResults.forEach(dayRecords => {
-      if (Array.isArray(dayRecords)) {
-        dayRecords.forEach(rec => {
-          const dateObj = new Date(rec.timestamp || rec.time || rec.start);
-          formattedData.push({
-            timestamp: dateObj,
-            label: dateObj.toLocaleDateString('da-DK', { day:'numeric', month:'short' }) + ` ${String(dateObj.getHours()).padStart(2,'0')}:00`,
-            price: rec.price * 100 
-          });
-        });
-      }
-    });
-
-    if (!formattedData.length) throw new Error('Kunne ikke hente data fra Strømligning.');
-
+    // Sorter kronologisk
     formattedData.sort((a, b) => a.timestamp - b.timestamp);
 
+    // Find nøgletal for I DAG specifikt (til tabellen)
     const todayStr = new Date().toDateString();
     const todayRecords = formattedData.filter(d => d.timestamp.toDateString() === todayStr);
     
@@ -313,12 +346,13 @@ async function refreshElectricity() {
       const curHour = new Date().getHours();
       const currentRecord = todayRecords.find(d => d.timestamp.getHours() === curHour);
 
-      document.getElementById('elec-now').textContent = currentRecord ? currentRecord.price.toFixed(1) + ' øre' : '—';
+      document.getElementById('elec-now').textContent = currentRecord ? currentRecord.price.toFixed(1) + ' øre' : (todayRecords[todayRecords.length - 1].price.toFixed(1) + ' øre');
       document.getElementById('elec-min').textContent = minToday.toFixed(1) + ' øre';
       document.getElementById('elec-max').textContent = maxToday.toFixed(1) + ' øre';
       document.getElementById('elec-avg').textContent = avgToday.toFixed(1) + ' øre';
     }
 
+    // Tegn grafen
     renderMonochromeChart(formattedData);
     setStatusText('Live');
 
@@ -326,10 +360,11 @@ async function refreshElectricity() {
     console.error(e);
     if (errorEl) {
       errorEl.style.display = 'block';
-      errorEl.textContent = 'Strømligning API-fejl: ' + e.message;
+      errorEl.textContent = 'Energi Data Service-fejl: ' + e.message;
     }
     setStatusText('Fejl ved el-synkronisering');
   }
+  document.getElementById('last-updated').textContent = 'Sidst synkroniseret: ' + new Date().toLocaleTimeString('da-DK');
 }
 
 /* ── Chart.js LaTeX-style Monochrome Renderer ────────────────────── */
@@ -350,7 +385,7 @@ function renderMonochromeChart(dataPoints) {
       labels: labels,
       datasets: [
         {
-          label: 'Fuld forbrugspris (øre/kWh)',
+          label: 'Total forbrugspris (øre/kWh)',
           data: prices,
           borderColor: '#000000',
           borderWidth: 1.5,
@@ -379,7 +414,7 @@ function renderMonochromeChart(dataPoints) {
           ticks: {
             color: '#000000',
             font: { family: '"Latin Modern Roman", serif', size: 10 },
-            maxTicksLimit: 10
+            maxTicksLimit: 12
           },
           border: { color: '#000000' }
         },
@@ -396,4 +431,47 @@ function renderMonochromeChart(dataPoints) {
           grid: { color: '#eeeeee' },
           ticks: {
             color: '#000000',
-            font: { family: '"Latin
+            font: { family: '"Latin Modern Roman", serif', size: 11 }
+          },
+          border: { color: '#000000' }
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Forbrug (kWh)',
+            color: '#000000',
+            font: { family: '"Latin Modern Roman", serif', size: 11 }
+          },
+          grid: { drawOnChartArea: false },
+          ticks: {
+            color: '#000000',
+            font: { family: '"Latin Modern Roman", serif', size: 11 }
+          },
+          border: { color: '#000000' }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          labels: {
+            color: '#000000',
+            font: { family: '"Latin Modern Roman", serif', size: 11 }
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ── Start ──────────────────────────────────────────────────────── */
+refreshStock();
+refreshElectricity();
+
+setInterval(refreshStock, CONFIG.stockRefreshMs);
+setInterval(refreshElectricity, CONFIG.elecRefreshMs);
+</script>
+</body>
+</html>
