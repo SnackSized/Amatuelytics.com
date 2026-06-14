@@ -1,35 +1,11 @@
-# ==============================================================================
-# GITHUB ACTIONS – AUTOMATISK MULTI-DEPLOYS TIL ONE.COM WEBROOTS
-# ==============================================================================
-# 
-# DOKUMENTATION AF DOMÆNER OG SYSTEM-MAPPER (SILOER):
-# ------------------------------------------------------------------------------
-# Hovedside: amateulytics.com           --> /webroots/9509701a/
-# Subdomæne: ai.amateulytics.com        --> /webroots/b3f97a47/
-# Subdomæne: cv.amateulytics.com        --> /webroots/b5eb7626/
-# Subdomæne: dashboard.amateulytics.com --> /webroots/be5652e7/
-# Subdomæne: data.amateulytics.com      --> /webroots/a5402042/
-# ==============================================================================
+# Automatically swaps the text token placeholder for the secure production string
+      - name: Inject Alpha Vantage API Key Secret
+        env:
+          AV_KEY: ${{ secrets.ALPHA_VANTAGE_KEY }}
+        run: |
+          sed -i "s/###ALPHA_VANTAGE_KEY_PLACEHOLDER###/$AV_KEY/g" ./dashboard/stock.php
 
-name: Complete Deploy to Real Webroots
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install LFTP
-        run: sudo apt-get update && sudo apt-get install -y lftp
-
-      # Vi uploader alt det rigtige indhold til de fem dokumenterede webroots-siloer
+      # Din eksisterende uændrede LFTP overførsel kører herunder bagefter
       - name: SFTP Mirror to Exact Webroot Silos
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
