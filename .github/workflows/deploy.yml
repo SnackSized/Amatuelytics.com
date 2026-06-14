@@ -1,4 +1,18 @@
-# Automatically swaps the text token placeholder for the secure production string
+# ==============================================================================
+# DEPLOYMENT DOKUMENTATION - ONE.COM CONFIGURATION
+# ==============================================================================
+# Host:         ssh.c4ew2s88y.service.one
+# Port:         22 (Standard SFTP via SSH)
+# 
+# DESTINATIONS-MAPPER / SILO-WEBROOTS:
+# - Rod-mappe (./)      ->  /webroots/9509701a/  (Ekskluderer ai, cv, dashboard, data, .git*)
+# - AI Subdomæne        ->  /webroots/b3f97a47/  (./ai/)
+# - CV Subdomæne        ->  /webroots/b5eb7626/  (./cv/)
+# - Dashboard Subdomæne ->  /webroots/be5652e7/  (./dashboard/)
+# - Data Subdomæne      ->  /webroots/a5402042/  (./data/)
+# ==============================================================================
+
+      # Automatically swaps the text token placeholder for the secure production string
       - name: Inject Alpha Vantage API Key Secret
         env:
           AV_KEY: ${{ secrets.ALPHA_VANTAGE_KEY }}

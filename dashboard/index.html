@@ -181,10 +181,10 @@
 
 <section class="dashboard-post">
   <div class="post-title">Equity Analysis: Rolls-Royce Holdings</div>
-  <div class="post-meta">Asset Class: Equities · Ticker: RR.L · Interval: 5m</div>
+  <div class="post-meta">Asset Class: Equities · Ticker: RR.L · Interval: Dynamic (Server Cooldown)</div>
   
   <p class="post-description">
-    En simpel tracking af Rolls-Royce Holdings plc (RR.L). Denne sektion fungerer som min personlige logbog over aktivets nuværende kursudvikling, hentet direkte via Alpha Vantage API'et hvert 5. minut for at overvåge likviditet og markedsbevægelser.
+    En simpel tracking af Rolls-Royce Holdings plc (RR.L). Denne sektion fungerer som min personlige logbog over aktivets nuværende kursudvikling, hentet sikkert via et lokalt PHP-mellemlag, der håndterer caching og rate limits for Alpha Vantage API'et.
   </p>
 
   <div class="single-data-box" id="card-RR_L">
@@ -227,17 +227,15 @@
 </section>
 
 <footer>
-  <span>Pipeline: Alpha Vantage API &amp; Carnot v2 Grid Engine</span><br>
+  <span>Pipeline: Secure PHP Proxy &amp; Carnot v2 Grid Engine</span><br>
   <span id="last-updated">Sidst synkroniseret: —</span>
 </footer>
 
 <script>
 const CONFIG = {
-  ticker: "RR.L",
-  alphaVantageKey: "FR3RHUND56FHKJG3",
   elZone: "DK1",
-  // Ændret nøje til 5 minutter og 1 sekund for at respektere API rate limits absolut
-  stockRefreshMs: 5 * 60 * 1000 + 1000, 
+  // Da PHP-scriptet cacher internt, kan browseren roligt tjekke proxyen igennem oftere (f.eks. hvert 30. sekund)
+  stockRefreshMs: 30 * 1000, 
   elecRefreshMs:  60 * 60 * 1000
 };
 
@@ -255,29 +253,33 @@ function setStatusText(text) {
   document.getElementById('status-text').textContent = "System Status: " + text;
 }
 
-/* ── Equity Engine (RR.L) ───────────────────────────────────────── */
+/* ── Equity Engine (Lokal PHP Proxy) ────────────────────────────── */
 async function refreshStock() {
   setStatusText('Synkroniserer aktiekurs…');
   try {
-    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${encodeURIComponent(CONFIG.ticker)}&apikey=${CONFIG.alphaVantageKey}`;
+    // Kalder din stock.php som ligger i samme folder
+    const url = 'stock.php';
     const r = await fetch(url);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    const q = d['Global Quote'];
     
-    if (!q || !q['05. price']) throw new Error('API limit nået');
+    // Hvis PHP-scriptet returnerer en defineret fejlstruktur
+    if (d.error) throw new Error(d.message);
 
-    const price = parseFloat(q['05. price']);
-    const change = parseFloat(q['09. change']);
-    const pct = parseFloat(q['10. change percent']);
+    const price = d.price;
+    const change = d.change;
+    const pct = d.pct;
 
     const sign = change >= 0 ? '+' : '';
     const pctStr = isNaN(pct) ? '' : ` (${sign}${pct.toFixed(2)}%)`;
 
     document.querySelector('.stock-price').textContent = price.toLocaleString('da-DK', { minimumFractionDigits: 2 }) + ' GBX';
+    
     const chEl = document.querySelector('.stock-change');
     chEl.textContent = `${sign}${change.toFixed(2)}${pctStr}`;
-    setStatusText('Live');
+    
+    // Viser den specifikke statusbesked fra din PHP (f.eks. "Live Update", "Cached" eller "Uden for markedsvindue")
+    setStatusText(d.status || 'OK');
   } catch (e) {
     document.querySelector('.stock-price').innerHTML = '<span class="err">Fejl</span>';
     document.querySelector('.stock-change').textContent = e.message;
@@ -292,7 +294,6 @@ async function refreshElectricity() {
   errorEl.style.display = 'none';
   try {
     const today = new Date().toISOString().slice(0, 10);
-    // Opdateret API endpoint til Carnot v2 med den korrekte offentlige gæste-nøgle
     const url = `https://api.carnot.dk/v2/spot?area=${CONFIG.elZone}&date=${today}`;
     const r = await fetch(url, {
       headers: { 'X-API-KEY': 'public-guest-token' }
@@ -300,7 +301,6 @@ async function refreshElectricity() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
 
-    // Mapping af priser fra DKK/MWh til øre/kWh (divider med 10)
     const hours = data.map(h => ({
       hour: new Date(h.HourDK || h.timestamp).getHours(),
       price: (h.SpotPriceDKK || h.price) / 10,
