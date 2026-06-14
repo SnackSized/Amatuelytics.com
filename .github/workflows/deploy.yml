@@ -1,3 +1,11 @@
+name: Deploy to One.com
+
+# Udløser workflowet automatisk hver gang du pusher til din hoved-branch
+on:
+  push:
+    branches:
+      - main  # <--- Ret til master, hvis din branch hedder master
+
 # ==============================================================================
 # DEPLOYMENT DOKUMENTATION - ONE.COM CONFIGURATION
 # ==============================================================================
@@ -12,14 +20,22 @@
 # - Data Subdomæne      ->  /webroots/a5402042/  (./data/)
 # ==============================================================================
 
-      # Automatically swaps the text token placeholder for the secure production string
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Henter din kode ud på GitHubs server, så vi kan arbejde med den
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Swapper din placeholder ud med din rigtige API-nøgle i stock.php
       - name: Inject Alpha Vantage API Key Secret
         env:
           AV_KEY: ${{ secrets.ALPHA_VANTAGE_KEY }}
         run: |
           sed -i "s/###ALPHA_VANTAGE_KEY_PLACEHOLDER###/$AV_KEY/g" ./dashboard/stock.php
 
-      # Din eksisterende uændrede LFTP overførsel kører herunder bagefter
+      # Spejler filerne over til de korrekte silo-mapper hos one.com
       - name: SFTP Mirror to Exact Webroot Silos
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
