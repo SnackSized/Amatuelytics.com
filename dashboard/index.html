@@ -207,7 +207,7 @@
 const CONFIG = {
   ticker: "RR.L",
   alphaVantageKey: "FR3RHUND56FHKJG3",
-  elZone: "dk1", // Strømligning foretrækker små bogstaver
+  elZone: "dk1", 
   stockRefreshMs: 5 * 60 * 1000 + 1000, 
   elecRefreshMs:  30 * 60 * 1000 
 };
@@ -257,48 +257,50 @@ async function refreshStock() {
   document.getElementById('last-updated').textContent = 'Sidst synkroniseret: ' + new Date().toLocaleTimeString('da-DK');
 }
 
-/* ── Energy Engine (Strømligning.dk API - 5 dages fuld prisserie) ── */
+/* ── Energy Engine (Strømligning.dk API - Fejlsikret Dags-loop) ── */
 async function refreshElectricity() {
   const errorEl = document.getElementById('elec-error');
   if (errorEl) errorEl.style.display = 'none';
   
   try {
-    // Strømligning henter automatisk dagsaktuelle og kommende priser på /api/prices/
-    // For at bygge en historisk tidsserie kalder vi deres range-funktion.
-    const end = new Date();
-    // Hvis klokken er efter 13, tilføjer vi i morgen til tidsserien
-    if (end.getHours() >= 13) {
-      end.setDate(end.getDate() + 1);
+    setStatusText('Synkroniserer el-priser…');
+    
+    const datesToFetch = [];
+    const maxDays = new Date().getHours() >= 13 ? 6 : 5; 
+    
+    for (let i = -5; i <= (maxDays === 6 ? 1 : 0); i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      datesToFetch.push(d.toISOString().slice(0, 10));
     }
-    const start = new Date();
-    start.setDate(start.getDate() - 5);
 
-    const startStr = start.toISOString().slice(0, 10);
-    const endStr = end.toISOString().slice(0, 10);
-
-    // Henter priser for DK1 inkl. fuld transport (N1 tarif anvendes som standard vest-eksempel), afgifter og moms
-    const url = `https://stromligning.dk/api/prices/${CONFIG.elZone}?start=${startStr}&end=${endStr}`;
-    
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('HTTP status ' + r.status);
-    
-    const records = await r.json();
-    if (!records || !records.length) throw new Error('Ingen data returneret fra Strømligning.');
-
-    // Strømligning returnerer prisen i KR pr. kWh (f.eks. 2.34) -> Vi ganger med 100 for at få øre/kWh
-    const formattedData = records.map(rec => {
-      const dateObj = new Date(rec.timestamp || rec.time);
-      return {
-        timestamp: dateObj,
-        label: dateObj.toLocaleDateString('da-DK', { day:'numeric', month:'short' }) + ` ${String(dateObj.getHours()).padStart(2,'0')}:00`,
-        price: rec.price * 100 // Konverter DKK til øre
-      };
+    const fetchPromises = datesToFetch.map(async (dateStr) => {
+      const url = `https://stromligning.dk/api/prices/${CONFIG.elZone}/${dateStr}`;
+      const r = await fetch(url);
+      if (!r.ok) return []; 
+      return await r.json();
     });
 
-    // Sorterer kronologisk
+    const allResults = await Promise.all(fetchPromises);
+    
+    let formattedData = [];
+    allResults.forEach(dayRecords => {
+      if (Array.isArray(dayRecords)) {
+        dayRecords.forEach(rec => {
+          const dateObj = new Date(rec.timestamp || rec.time || rec.start);
+          formattedData.push({
+            timestamp: dateObj,
+            label: dateObj.toLocaleDateString('da-DK', { day:'numeric', month:'short' }) + ` ${String(dateObj.getHours()).padStart(2,'0')}:00`,
+            price: rec.price * 100 
+          });
+        });
+      }
+    });
+
+    if (!formattedData.length) throw new Error('Kunne ikke hente data fra Strømligning.');
+
     formattedData.sort((a, b) => a.timestamp - b.timestamp);
 
-    // Find nøgletal for I DAG specifikt (til tabellen)
     const todayStr = new Date().toDateString();
     const todayRecords = formattedData.filter(d => d.timestamp.toDateString() === todayStr);
     
@@ -317,8 +319,8 @@ async function refreshElectricity() {
       document.getElementById('elec-avg').textContent = avgToday.toFixed(1) + ' øre';
     }
 
-    // Tegn det monokrome diagram
     renderMonochromeChart(formattedData);
+    setStatusText('Live');
 
   } catch (e) {
     console.error(e);
@@ -326,6 +328,7 @@ async function refreshElectricity() {
       errorEl.style.display = 'block';
       errorEl.textContent = 'Strømligning API-fejl: ' + e.message;
     }
+    setStatusText('Fejl ved el-synkronisering');
   }
 }
 
@@ -393,47 +396,4 @@ function renderMonochromeChart(dataPoints) {
           grid: { color: '#eeeeee' },
           ticks: {
             color: '#000000',
-            font: { family: '"Latin Modern Roman", serif', size: 11 }
-          },
-          border: { color: '#000000' }
-        },
-        y1: {
-          type: 'linear',
-          display: true,
-          position: 'right',
-          title: {
-            display: true,
-            text: 'Forbrug (kWh)',
-            color: '#000000',
-            font: { family: '"Latin Modern Roman", serif', size: 11 }
-          },
-          grid: { drawOnChartArea: false },
-          ticks: {
-            color: '#000000',
-            font: { family: '"Latin Modern Roman", serif', size: 11 }
-          },
-          border: { color: '#000000' }
-        }
-      },
-      plugins: {
-        legend: {
-          display: true,
-          labels: {
-            color: '#000000',
-            font: { family: '"Latin Modern Roman", serif', size: 11 }
-          }
-        }
-      }
-    }
-  });
-}
-
-/* ── Start ──────────────────────────────────────────────────────── */
-refreshStock();
-refreshElectricity();
-
-setInterval(refreshStock, CONFIG.stockRefreshMs);
-setInterval(refreshElectricity, CONFIG.elecRefreshMs);
-</script>
-</body>
-</html>
+            font: { family: '"Latin
