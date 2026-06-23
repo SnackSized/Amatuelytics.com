@@ -40,6 +40,16 @@ jobs:
         run: |
           sed -i "s/###ALPHA_VANTAGE_KEY_PLACEHOLDER###/$AV_KEY/g" ./dashboard/stock.php
 
+
+      - name: Inject Eloverblik Secrets (Token & Metering Point)
+        env:
+          EL_TOKEN: ${{ secrets.ELOVERBLIK_API_TOKEN }}
+          EL_METER: ${{ secrets.ELOVERBLIK_METERING_POINT }}
+        run: |
+          sed -i "s/###ELOVERBLIK_API_TOKEN_PLACEHOLDER###/$EL_TOKEN/g" ./dashboard/electricity.php
+          sed -i "s/###ELOVERBLIK_METERING_POINT_PLACEHOLDER###/$EL_METER/g" ./dashboard/electricity.php
+
+
       # SIKRING: Opretter mapperne lokalt hvis de mangler i Git, så lftp ikke crasher
       - name: Ensure subfolders exist
         run: mkdir -p ai avg cv dashboard data game
