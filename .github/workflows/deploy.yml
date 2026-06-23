@@ -34,27 +34,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y lftp
 
-      # SIKRING: Opretter mapperne lokalt hvis de mangler i Git, så lftp ikke crasher
-      - name: Ensure subfolders exist
-        run: mkdir -p ai avg cv dashboard data game
-
-      # TRIN 1: Indsprøjt Eloverblik-secrets i dashboard-mappen
-      - name: Inject Eloverblik Secrets (Token & Metering Point)
-        env:
-          EL_TOKEN: ${{ secrets.ELOVERBLIK_API_TOKEN }}
-          EL_METER: ${{ secrets.ELOVERBLIK_METERING_POINT }}
-        run: |
-          sed -i "s/###ELOVERBLIK_API_TOKEN_PLACEHOLDER###/$EL_TOKEN/g" ./dashboard/electricity.php
-          sed -i "s/###ELOVERBLIK_METERING_POINT_PLACEHOLDER###/$EL_METER/g" ./dashboard/electricity.php
-
-      # TRIN 2: Indsprøjt Alpha Vantage API Key Secret
       - name: Inject Alpha Vantage API Key Secret
         env:
           AV_KEY: ${{ secrets.ALPHA_VANTAGE_KEY }}
         run: |
           sed -i "s/###ALPHA_VANTAGE_KEY_PLACEHOLDER###/$AV_KEY/g" ./dashboard/stock.php
 
-      # TRIN 3: Multi-silo deployment via SFTP Mirror (Samlet på én linje)
+      # SIKRING: Opretter mapperne lokalt hvis de mangler i Git, så lftp ikke crasher
+      - name: Ensure subfolders exist
+        run: mkdir -p ai avg cv dashboard data game
+
       - name: SFTP Mirror to Exact Webroot Silos
         env:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
