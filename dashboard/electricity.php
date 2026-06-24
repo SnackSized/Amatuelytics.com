@@ -95,17 +95,13 @@ if ($auth_response !== FALSE) {
     }
 }
 
-// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET (Rettet URL-struktur her)
-$api_base = "https://api.energidataservice.dk/dataset/Elspotprices";
-$query_params = [
-    'start' => $start_date_str . 'T00:00',
-    'end' => $end_date_str . 'T23:59',
-    'filter' => '{"PriceArea":"' . $price_area . '"}', // Stringificeret JSON-objekt direkte
-    'sort' => 'HourUTC ASC',
-    'limit' => '150'
-];
-
-$api_url = $api_base . "?" . http_build_query($query_params);
+// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET (Hardcoded rå URL-bygning)
+$api_url = "https://api.energidataservice.dk/dataset/Elspotprices"
+         . "?start=" . $start_date_str . "T00:00"
+         . "&end=" . $end_date_str . "T23:59"
+         . "&filter=" . urlencode('{"PriceArea":"' . $price_area . '"}')
+         . "&sort=HourUTC%20ASC"
+         . "&limit=150";
 
 $options = [
     'http' => [
@@ -117,7 +113,7 @@ $options = [
                     "Connection: close\r\n"
     ],
     'ssl' => [
-        'verify_peer' => false, // Omgår manglende lokale CA-certifikater hos webhost
+        'verify_peer' => false, 
         'verify_peer_name' => false
     ]
 ];
@@ -125,13 +121,18 @@ $options = [
 $context = stream_context_create($options);
 $response = @file_get_contents($api_url, false, $context);
 
+// Hvis det fejler helt, så træk HTTP-fejlkoden ud til fejlfinding
 if ($response === FALSE) { 
-    respond_with_cache($cache_file, "Energinet API Error. Serving cache."); 
+    $error_info = "Energinet API Connection Error.";
+    if (isset($http_response_header[0])) {
+        $error_info .= " Server sagde: " . $http_response_header[0];
+    }
+    respond_with_cache($cache_file, $error_info); 
 }
 
 $data = json_decode($response, true);
 if (!isset($data['records']) || empty($data['records'])) {
-    respond_with_cache($cache_file, "Ugyldigt svar fra Energinet. Serving cache.");
+    respond_with_cache($cache_file, "Ugyldigt svar eller tomme records fra Energinet.");
 }
 
 // 6. PROCESS AND COMBINE DATA
