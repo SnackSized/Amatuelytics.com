@@ -95,20 +95,33 @@ if ($auth_response !== FALSE) {
     }
 }
 
-// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET (Opdateret iht. API-guiden)
-// Vi bygger URL'en præcis efter Energinets dokumentation med rå strenge for filteret
+// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET
 $api_base = "https://api.energidataservice.dk/dataset/Elspotprices";
 $query_params = [
     'start' => $start_date_str . 'T00:00',
     'end' => $end_date_str . 'T23:59',
-    'filter' => '{"PriceArea":["' . $price_area . '"]}', // Rå JSON filter-streng direkte i parameteren
-    'sort' => 'HourUTC ASC',                            // Sikrer kronologisk orden med det samme
-    'limit' => '150'                                    // Sørger for, at vi får alle 4 dage med (96 rækker)
+    'filter' => '{"PriceArea":["' . $price_area . '"]}',
+    'sort' => 'HourUTC ASC',
+    'limit' => '150'
 ];
 
 $api_url = $api_base . "?" . http_build_query($query_params);
 
-$options = array('http' => array('timeout' => 10, 'header' => "User-Agent: PHP\r\n"));
+$options = [
+    'http' => [
+        'method' => 'GET',
+        'timeout' => 15,
+        'protocol_version' => 1.1,
+        'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) PHP\r\n" .
+                    "Accept: application/json\r\n" .
+                    "Connection: close\r\n"
+    ],
+    'ssl' => [
+        'verify_peer' => false,       // Bypass hvis One.com mangler CA root certifikater
+        'verify_peer_name' => false
+    ]
+];
+
 $context = stream_context_create($options);
 $response = @file_get_contents($api_url, false, $context);
 
@@ -121,11 +134,11 @@ if (!isset($data['records']) || empty($data['records'])) {
     respond_with_cache($cache_file, "Ugyldigt svar fra Energinet. Serving cache.");
 }
 
+// 6. PROCESS AND COMBINE DATA
 $hourly_data = [];
 $elafgift = 0.7611;       
 $energinet_tl = 0.1170;   
 
-// Vi fjerner array_reverse(), da dataen nu ankommer i korrekt kronologisk orden direkte fra API'en
 foreach ($data['records'] as $record) {
     $spot_kwh = $record['SpotPriceDKK'] / 1000;
     $local_timestamp = strtotime($record['HourDK']);
