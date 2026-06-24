@@ -95,12 +95,12 @@ if ($auth_response !== FALSE) {
     }
 }
 
-// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET
+// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET (Rettet URL-struktur her)
 $api_base = "https://api.energidataservice.dk/dataset/Elspotprices";
 $query_params = [
     'start' => $start_date_str . 'T00:00',
     'end' => $end_date_str . 'T23:59',
-    'filter' => '{"PriceArea":["' . $price_area . '"]}',
+    'filter' => '{"PriceArea":"' . $price_area . '"}', // Stringificeret JSON-objekt direkte
     'sort' => 'HourUTC ASC',
     'limit' => '150'
 ];
@@ -117,7 +117,7 @@ $options = [
                     "Connection: close\r\n"
     ],
     'ssl' => [
-        'verify_peer' => false,       // Bypass hvis One.com mangler CA root certifikater
+        'verify_peer' => false, // Omgår manglende lokale CA-certifikater hos webhost
         'verify_peer_name' => false
     ]
 ];
