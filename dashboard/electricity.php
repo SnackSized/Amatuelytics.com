@@ -95,13 +95,18 @@ if ($auth_response !== FALSE) {
     }
 }
 
-// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET
-$api_url = "https://api.energidataservice.dk/dataset/Elspotprices?" . http_build_query([
+// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET (Opdateret iht. API-guiden)
+// Vi bygger URL'en præcis efter Energinets dokumentation med rå strenge for filteret
+$api_base = "https://api.energidataservice.dk/dataset/Elspotprices";
+$query_params = [
     'start' => $start_date_str . 'T00:00',
     'end' => $end_date_str . 'T23:59',
-    'filter' => json_encode(["PriceArea" => [$price_area]]),
-    'sort' => 'HourUTC ASC'
-]);
+    'filter' => '{"PriceArea":["' . $price_area . '"]}', // Rå JSON filter-streng direkte i parameteren
+    'sort' => 'HourUTC ASC',                            // Sikrer kronologisk orden med det samme
+    'limit' => '150'                                    // Sørger for, at vi får alle 4 dage med (96 rækker)
+];
+
+$api_url = $api_base . "?" . http_build_query($query_params);
 
 $options = array('http' => array('timeout' => 10, 'header' => "User-Agent: PHP\r\n"));
 $context = stream_context_create($options);
@@ -120,7 +125,8 @@ $hourly_data = [];
 $elafgift = 0.7611;       
 $energinet_tl = 0.1170;   
 
-foreach (array_reverse($data['records']) as $record) {
+// Vi fjerner array_reverse(), da dataen nu ankommer i korrekt kronologisk orden direkte fra API'en
+foreach ($data['records'] as $record) {
     $spot_kwh = $record['SpotPriceDKK'] / 1000;
     $local_timestamp = strtotime($record['HourDK']);
     $hour = (int)date('G', $local_timestamp);
@@ -135,7 +141,6 @@ foreach (array_reverse($data['records']) as $record) {
     $total_price = round(($spot_kwh + $nettarif + $energinet_tl + $elafgift) * 1.25, 2);
     $timeline_key = date('Y-m-d H:i', $local_timestamp);
 
-    // Hent reelt forbrug fra Eloverblik-mappet. Hvis ikke tilgængeligt (fremtid/idag), returneres 0
     $real_consumption = isset($consumption_map[$timeline_key]) ? $consumption_map[$timeline_key] : 0;
 
     $hourly_data[] = [
