@@ -95,11 +95,15 @@ if ($auth_response !== FALSE) {
     }
 }
 
-// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET (Hardcoded rå URL-bygning)
+// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET (Konsolideret filter-bygning)
+$filter_object = [
+    "PriceArea" => [$price_area]
+];
+
 $api_url = "https://api.energidataservice.dk/dataset/Elspotprices"
          . "?start=" . $start_date_str . "T00:00"
          . "&end=" . $end_date_str . "T23:59"
-         . "&filter=" . urlencode('{"PriceArea":"' . $price_area . '"}')
+         . "&filter=" . urlencode(json_encode($filter_object))
          . "&sort=HourUTC%20ASC"
          . "&limit=150";
 
@@ -121,7 +125,6 @@ $options = [
 $context = stream_context_create($options);
 $response = @file_get_contents($api_url, false, $context);
 
-// Hvis det fejler helt, så træk HTTP-fejlkoden ud til fejlfinding
 if ($response === FALSE) { 
     $error_info = "Energinet API Connection Error.";
     if (isset($http_response_header[0])) {
