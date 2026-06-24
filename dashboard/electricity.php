@@ -13,15 +13,16 @@ date_default_timezone_set('Europe/Copenhagen');
 $current_time = time();
 $force_update = (isset($_GET['force']) && $_GET['force'] === 'true');
 
+// Forbedret cache-funktion: Serverer eksisterende data som fallback ved API-fejl
 function respond_with_cache($file, $status_msg) {
     if (file_exists($file)) {
         $cached_data = json_decode(file_get_contents($file), true);
-        $cached_data['status'] = $status_msg;
+        $cached_data['status'] = $status_msg . " (Serving backup cache)";
         echo json_encode($cached_data);
     } else {
         echo json_encode([
             "error" => true,
-            "message" => "Ingen data tilgængelig i cachen endnu.",
+            "message" => "Ingen data tilgængelig i cachen endnu. Energinet rate-limiter serveren (HTTP 429).",
             "status" => $status_msg
         ]);
     }
@@ -95,7 +96,7 @@ if ($auth_response !== FALSE) {
     }
 }
 
-// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET (Konsolideret filter-bygning)
+// 5. FETCH ELECTRICITY SPOT PRICES FROM ENERGINET
 $filter_object = [
     "PriceArea" => [$price_area]
 ];
@@ -126,9 +127,9 @@ $context = stream_context_create($options);
 $response = @file_get_contents($api_url, false, $context);
 
 if ($response === FALSE) { 
-    $error_info = "Energinet API Connection Error.";
+    $error_info = "Energinet API Error.";
     if (isset($http_response_header[0])) {
-        $error_info .= " Server sagde: " . $http_response_header[0];
+        $error_info .= " (" . $http_response_header[0] . ")";
     }
     respond_with_cache($cache_file, $error_info); 
 }
