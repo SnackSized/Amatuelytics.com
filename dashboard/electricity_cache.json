@@ -1,0 +1,14 @@
+{
+  "grid_operator": "SEF Net (Sommermodel)",
+  "status": "Venter på hul igennem til Energinet... (Serving backup cache)",
+  "timeline": [
+    {
+      "timestamp": "2026-06-27 12:00",
+      "date": "2026-06-27",
+      "hour": "12:00",
+      "spot_price": 0.50,
+      "total_price": 1.50,
+      "consumption_kwh": 0.0
+    }
+  ]
+}
