@@ -1,63 +1,348 @@
-/* ── Energy Engine (Eget PHP Proxy Mellemlag) ────────────────────── */
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amateulytics — Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/latin-modern-webfont@1.0.0/style/latin-modern-roman.min.css">
+<style>
+  /* ─── LATEX MONOCHROME THEME ─────────────────────── */
+  :root {
+    --bg:        #ffffff;
+    --text:      #000000;
+    --border:    #000000;
+    --muted:     #555555;
+    --light-grey:#f9f9f9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Latin Modern Roman", Georgia, serif;
+    font-size: 14pt;
+    line-height: 1.6;
+    max-width: 750px;
+    margin: 60px auto;
+    padding: 0 20px;
+    text-align: justify;
+  }
+
+  /* ─── HEADER ─────────────────────────────────────── */
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 1.5rem;
+  }
+
+  header h1 {
+    font-size: 2.2em;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  #clock {
+    color: var(--muted);
+    font-size: 11pt;
+    margin-top: 5px;
+  }
+
+  #status-text {
+    font-size: 10pt;
+    font-variant: small-caps;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  /* ─── BLOG POST ARCHITECTURE (CENTERED) ──────────── */
+  .dashboard-post {
+    margin-bottom: 5rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .post-title {
+    font-size: 1.6em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 15px;
+    font-variant: small-caps;
+    letter-spacing: 0.5px;
+  }
+
+  .post-meta {
+    font-size: 10pt;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  .post-description {
+    font-size: 12pt;
+    margin-bottom: 30px;
+    color: #222;
+  }
+
+  /* ─── MONOCHROME DATA PRESENTATION ───────────────── */
+  .single-data-box {
+    border: 1px solid var(--border);
+    padding: 20px;
+    text-align: center;
+    max-width: 350px;
+    margin: 20px auto;
+    background: var(--light-grey);
+  }
+
+  .big-metric {
+    font-size: 2.5rem;
+    font-weight: bold;
+    letter-spacing: -1px;
+    margin: 10px 0;
+  }
+
+  .metric-label {
+    font-size: 10pt;
+    font-variant: small-caps;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* ─── ELECTRICITY GRID & TABLES ──────────────────── */
+  .elec-summary-table {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: collapse;
+    font-size: 12pt;
+    text-align: center;
+  }
+
+  .elec-summary-table th, .elec-summary-table td {
+    border: 1px solid var(--border);
+    padding: 8px;
+  }
+
+  .elec-summary-table th {
+    background: var(--light-grey);
+    font-variant: small-caps;
+  }
+
+  #elec-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 20px;
+  }
+
+  .hour-cell {
+    background: #fff;
+    padding: 10px 5px;
+    text-align: center;
+    font-size: 11pt;
+  }
+
+  .hour-cell.current-hour {
+    background: var(--light-grey);
+    font-weight: bold;
+    text-decoration: underline;
+  }
+
+  .hour-label {
+    font-size: 9pt;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  /* ─── FOOTER ─────────────────────────────────────── */
+  footer {
+    margin-top: 5rem;
+    font-size: 10pt;
+    color: var(--muted);
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding-top: 1.5rem;
+  }
+
+  .err { color: #000; font-weight: bold; font-size: 11pt; text-align: center; }
+  .skeleton { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Amateulytics Dashboard</h1>
+  <div id="clock"></div>
+  <div id="status-text">System Status: Indlæser…</div>
+</header>
+
+<section class="dashboard-post">
+  <div class="post-title">Equity Analysis: Rolls-Royce Holdings</div>
+  <div class="post-meta">Asset Class: Equities · Ticker: RR.L · Interval: Dynamic (Server Cooldown)</div>
+  
+  <p class="post-description">
+    En simpel tracking af Rolls-Royce Holdings plc (RR.L). Denne sektion fungerer som min personlige logbog over aktivets nuværende kursudvikling, hentet sikkert via et lokalt PHP-mellemlag, der håndterer caching og rate limits for Alpha Vantage API'et.
+  </p>
+
+  <div class="single-data-box" id="card-RR_L">
+    <div class="metric-label">Rolls-Royce Holdings (RR.L)</div>
+    <div class="big-metric stock-price"><span class="skeleton">Henter...</span></div>
+    <div class="stock-change">—</div>
+  </div>
+</section>
+
+<section class="dashboard-post">
+  <div class="post-title">Energy Grid Observations: DK1 (Vest)</div>
+  <div class="post-meta">Market: Nord Pool Spot · Zone: DK1 · Unit: øre/kWh</div>
+  
+  <p class="post-description">
+    Overvågning af spotpriserne på det vestdanske elmarked (DK1). Datagrundlaget er struktureret med henblik på fremtidig korrelationstest. Herunder forberedes en dobbelt Y-akse, hvor den højre akse dedikeres til realtidsforbrugsdata fra min egen husstand.
+  </p>
+
+  <table class="elec-summary-table">
+    <thead>
+      <tr>
+        <th>Nu</th>
+        <th>Min i dag</th>
+        <th>Max i dag</th>
+        <th>Snit i dag</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td id="elec-now" style="font-weight: bold;">—</td>
+        <td id="elec-min">—</td>
+        <td id="elec-max">—</td>
+        <td id="elec-avg">—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div id="elec-grid">
+    </div>
+  <div id="elec-error" class="err" style="display:none"></div>
+</section>
+
+<footer>
+  <span>Pipeline: Secure PHP Proxy &amp; Carnot v2 Grid Engine</span><br>
+  <span id="last-updated">Sidst synkroniseret: —</span>
+</footer>
+
+<script>
+const CONFIG = {
+  elZone: "DK1",
+  // Da PHP-scriptet cacher internt, kan browseren roligt tjekke proxyen igennem oftere (f.eks. hvert 30. sekund)
+  stockRefreshMs: 30 * 1000, 
+  elecRefreshMs:  60 * 60 * 1000
+};
+
+/* ── Uret ───────────────────────────────────────────────────────── */
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('da-DK', { weekday:'long', day:'numeric', month:'short', year:'numeric' }) +
+    ' · ' + now.toLocaleTimeString('da-DK', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+function setStatusText(text) {
+  document.getElementById('status-text').textContent = "System Status: " + text;
+}
+
+/* ── Equity Engine (Lokal PHP Proxy) ────────────────────────────── */
+async function refreshStock() {
+  setStatusText('Synkroniserer aktiekurs…');
+  try {
+    // Kalder din stock.php som ligger i samme folder
+    const url = 'stock.php';
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    
+    // Hvis PHP-scriptet returnerer en defineret fejlstruktur
+    if (d.error) throw new Error(d.message);
+
+    const price = d.price;
+    const change = d.change;
+    const pct = d.pct;
+
+    const sign = change >= 0 ? '+' : '';
+    const pctStr = isNaN(pct) ? '' : ` (${sign}${pct.toFixed(2)}%)`;
+
+    document.querySelector('.stock-price').textContent = price.toLocaleString('da-DK', { minimumFractionDigits: 2 }) + ' GBX';
+    
+    const chEl = document.querySelector('.stock-change');
+    chEl.textContent = `${sign}${change.toFixed(2)}${pctStr}`;
+    
+    // Viser den specifikke statusbesked fra din PHP (f.eks. "Live Update", "Cached" eller "Uden for markedsvindue")
+    setStatusText(d.status || 'OK');
+  } catch (e) {
+    document.querySelector('.stock-price').innerHTML = '<span class="err">Fejl</span>';
+    document.querySelector('.stock-change').textContent = e.message;
+    setStatusText('Fejl ved synkronisering');
+  }
+  document.getElementById('last-updated').textContent = 'Sidst synkroniseret: ' + new Date().toLocaleTimeString('da-DK');
+}
+
+/* ── Energy Engine (Carnot v2 API) ───────────────────────────────── */
 async function refreshElectricity() {
   const errorEl = document.getElementById('elec-error');
   errorEl.style.display = 'none';
   try {
-    // VI VENDER BLIKKET INDAD: Kalder dit eget PHP-script i stedet for det eksterne API
-    const url = 'electricity.php'; 
-    const r = await fetch(url);
+    const today = new Date().toISOString().slice(0, 10);
+    const url = `https://api.carnot.dk/v2/spot?area=${CONFIG.elZone}&date=${today}`;
+    const r = await fetch(url, {
+      headers: { 'X-API-KEY': 'public-guest-token' }
+    });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
 
-    // Hvis dit PHP-script sender en fejl med (f.eks. hvis alt fejler)
-    if (data.error) throw new Error(data.message);
+    const hours = data.map(h => ({
+      hour: new Date(h.HourDK || h.timestamp).getHours(),
+      price: (h.SpotPriceDKK || h.price) / 10,
+    }));
 
-    // Dit PHP script spytter et 'timeline' array ud
-    const timeline = data.timeline || [];
-    if (!timeline.length) throw new Error('Ingen data tilgængelig i cachen');
+    if (!hours.length) throw new Error('Ingen data tilgængelig');
 
-    // Hent priser ud til beregninger (vi sikrer os de er tal via Float)
-    const prices = timeline.map(h => parseFloat(h.total_price || h.spot_price));
+    const prices = hours.map(h => h.price);
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    
-    // Find den aktuelle time baseret på din computers ur
     const curHour = new Date().getHours();
-    
-    // Matcher timen mod 'hour' feltet fra din PHP (f.eks. "12:00" -> 12)
-    const curData = timeline.find(h => parseInt(h.hour) === curHour);
+    const curData = hours.find(h => h.hour === curHour);
 
-    // Opdater oversigts-tabellen
-    document.getElementById('elec-now').textContent = curData ? parseFloat(curData.total_price || curData.spot_price).toFixed(1) + ' øre' : '—';
+    document.getElementById('elec-now').textContent = curData ? curData.price.toFixed(1) + ' øre' : '—';
     document.getElementById('elec-min').textContent = min.toFixed(1) + ' øre';
     document.getElementById('elec-max').textContent = max.toFixed(1) + ' øre';
     document.getElementById('elec-avg').textContent = avg.toFixed(1) + ' øre';
 
-    // Tegn selve 24-timers oversigten i dit flotte grid
     const grid = document.getElementById('elec-grid');
     grid.innerHTML = '';
-    
-    timeline.forEach(h => {
-      const hHour = parseInt(h.hour);
-      const priceVal = parseFloat(h.total_price || h.spot_price);
-      
+    hours.sort((a,b) => a.hour - b.hour).forEach(h => {
       const cell = document.createElement('div');
-      cell.className = 'hour-cell' + (hHour === curHour ? ' current-hour' : '');
+      cell.className = 'hour-cell' + (h.hour === curHour ? ' current-hour' : '');
       cell.innerHTML = `
-        <div class="hour-label">${String(hHour).padStart(2,'0')}:00</div>
-        <div class="hour-price">${priceVal.toFixed(0)}</div>`;
+        <div class="hour-label">${String(h.hour).padStart(2,'0')}:00</div>
+        <div class="hour-price">${h.price.toFixed(0)}</div>`;
       grid.appendChild(cell);
     });
-
-    // Hvis din PHP sendte en statusbesked med (fx "Serving backup cache"), viser vi den i statusbaren
-    if (data.status) {
-      setStatusText(data.status);
-    }
 
   } catch (e) {
     errorEl.style.display = 'block';
     errorEl.textContent = 'El-netværksfejl: ' + e.message;
-    setStatusText('Fejl ved synkronisering af elpriser');
   }
 }
+
+/* ── Start ──────────────────────────────────────────────────────── */
+refreshStock();
+refreshElectricity();
+
+setInterval(refreshStock, CONFIG.stockRefreshMs);
+setInterval(refreshElectricity, CONFIG.elecRefreshMs);
+</script>
+</body>
+</html>
